@@ -1,0 +1,89 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.cyclonedx.bom'
+}
+
+cyclonedxBom {
+    // Specified the type of project being built. Defaults to 'library'
+    projectType = "application"
+    // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+    schemaVersion = "1.4"
+    // Boms destination directory (defaults to build/reports)
+    destination = file("osm")
+    // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
+    outputName = "bom"
+    // The file format generated, can be xml, json or all for generating both
+    includeBomSerialNumber = false
+}
+
+android {
+    namespace 'com.example.cyclonedxsample'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.example.cyclonedxsample"
+        minSdk 24
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
+    }
+
+    flavorDimensions "env"
+
+    productFlavors {
+        qa {
+            dimension "env"
+        }
+        prod {
+            dimension "env"
+        }
+    }
+}
+
+
+def cycloneDxConfiguration = null
+
+tasks.withType(org.cyclonedx.gradle.CycloneDxTask) {
+    setIncludeConfigs(['prodReleaseCompileClasspath'])
+}
+
+def initCycloneDxConfig() {
+    if (gradle.startParameter.taskNames.contains("cyclonedxBom")) {
+        cycloneDxConfiguration = "default"
+    }
+}
+
+dependencies {
+    initCycloneDxConfig()
+    implementation(project(path: ':presentation', configuration: cycloneDxConfiguration))
+
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
